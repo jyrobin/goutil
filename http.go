@@ -41,8 +41,6 @@ const (
 	ctAppJson = "application/json"
 )
 
-// utils
-
 func HandleError(w http.ResponseWriter, err error, statusCode int) bool {
 	if err == nil {
 		return false
@@ -227,12 +225,20 @@ func GetRequest(url, contentType string, headers StrMap) (*http.Request, error) 
 	return HttpRequest(http.MethodGet, url, contentType, nil, headers)
 }
 
-func AjaxGetRequest(url string, headers StrMap) (*http.Request, error) {
-	return HttpRequest(http.MethodGet, url, ctAppJson, nil, headers)
-}
-
 func AjaxRequest(method, url string, data []byte, headers StrMap) (*http.Request, error) {
 	return HttpRequest(method, url, ctAppJson, data, headers)
+}
+
+func AjaxGetRequest(url string, headers StrMap) (*http.Request, error) {
+	return AjaxRequest(http.MethodGet, url, nil, headers)
+}
+
+func AjaxPostRequest(url string, jsonStr []byte, headers StrMap) (*http.Request, error) {
+	return AjaxRequest(http.MethodPost, url, jsonStr, headers)
+}
+
+func AjaxPutRequest(url string, jsonStr []byte, headers StrMap) (*http.Request, error) {
+	return AjaxRequest(http.MethodPut, url, jsonStr, headers)
 }
 
 func FormRequest(method, url string, data, headers StrMap) (*http.Request, error) {
@@ -331,8 +337,16 @@ func AjaxPost(url string, jsonStr []byte, headers StrMap) ([]byte, error) {
 	return Ajax(http.MethodPost, url, jsonStr, headers)
 }
 
+func AjaxPostUnmarshal(url string, jsonStr []byte, headers StrMap, v interface{}) error {
+	return AjaxUnmarshal(http.MethodPost, url, jsonStr, headers, v)
+}
+
 func AjaxPut(url string, jsonStr []byte, headers StrMap) ([]byte, error) {
 	return Ajax(http.MethodPut, url, jsonStr, headers)
+}
+
+func AjaxPutUnmarshal(url string, jsonStr []byte, headers StrMap, v interface{}) error {
+	return AjaxUnmarshal(http.MethodPut, url, jsonStr, headers, v)
 }
 
 // simple ajax calls, sending and receiving Map

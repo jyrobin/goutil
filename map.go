@@ -25,6 +25,27 @@ import (
 type Map map[string]interface{}
 type StrMap map[string]string
 
+type KV struct {
+	Key   string
+	Value interface{}
+}
+
+func KVsToMap(kvs ...KV) Map {
+	ret := make(Map, len(kvs))
+	for _, kv := range kvs {
+		ret[kv.Key] = kv.Value
+	}
+	return ret
+}
+
+func MapToKVs(m Map) []KV {
+	ret := make([]KV, len(m))
+	for k, v := range m {
+		ret = append(ret, KV{k, v})
+	}
+	return ret
+}
+
 func PickMap(m Map, keys ...string) Map {
 	ret := Map{}
 	for _, key := range keys {

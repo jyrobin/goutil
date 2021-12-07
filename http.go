@@ -70,28 +70,22 @@ func ReadRequestBody(req *http.Request) ([]byte, error) {
 // Marshal/unmarshal all mean json, all ignore whether Content-Type is applicattion/json
 // - maybe check if content-type is application/json later
 func UnmarshalResponse(res *http.Response, ret interface{}) error {
-	buf, err := ReadResponseBody(res)
-	if err != nil {
-		return err
+	if res == nil {
+		return fmt.Errorf("Nil response")
 	}
+
 	if res.StatusCode >= 400 {
 		return fmt.Errorf("StatusCode %d", res.StatusCode)
 	}
-	if len(buf) == 0 {
-		return fmt.Errorf("Empty body")
-	}
-	return json.Unmarshal(buf, ret)
+
+	return json.NewDecoder(res.Body).Decode(ret)
 }
 
 func UnmarshalRequest(req *http.Request, ret interface{}) error {
-	buf, err := ReadRequestBody(req)
-	if err != nil {
-		return err
+	if req == nil {
+		return fmt.Errorf("Nil request")
 	}
-	if len(buf) == 0 {
-		return fmt.Errorf("Empty body")
-	}
-	return json.Unmarshal(buf, ret)
+	return json.NewDecoder(req.Body).Decode(ret)
 }
 
 // REF: https://gist.github.com/rjz/fe283b02cbaa50c5991e1ba921adf7c9

@@ -52,3 +52,64 @@ func JsonMarshalContains(i1, i2 interface{}) bool {
 	}
 	return JsonContains(buf1, buf2)
 }
+
+// REF: https://google.github.io/styleguide/jsoncstyleguide.xml
+
+type JsonMsg struct {
+	ApiVersion string `json:"apiVersion,omitEmpty"`
+	Data       `json:"data,omitempty"`
+	Error      `json:"error,omitempty"`
+}
+type Data struct {
+	Kind    string            `json:"kind,omitempty"`
+	Payload string            `json:"payload,omitempty"` // make it simple - not using Fields
+	Values  map[string]string `json:"values,omitempty"`  // make it simple - not using Fields
+	Items   []json.RawMessage `json:"items,omitempty"`
+}
+
+func (d *Data) AddItem(item interface{}) error {
+	js, err := json.Marshal(item)
+	if err != nil {
+		return err
+	}
+	d.Items = append(d.Items, js)
+	return nil
+}
+
+type Error struct {
+	Code    int         `json:"code,omitempty"`
+	Message string      `json:"message,omitempty"`
+	Errors  []ErrorItem `json:"errors,omitempty"`
+}
+type ErrorItem struct {
+	Message string `json:"message,omitempty"`
+	Domain  string `json:"domain,omitempty"`
+	Reason  string `json:"reason,omitempty"`
+}
+
+func SimpleJsonError(msg string, codes ...int) []byte {
+	err := JsonMsg{
+		Error: Error{
+			Message: msg,
+		},
+	}
+	if len(codes) > 0 {
+		err.Error.Code = codes[0]
+	}
+	ret, _ := json.MarshalIndent(err, "", "  ")
+	return ret
+}
+
+func SimpleJsonData(values map[string]string, kinds ...string) []byte {
+	msg := JsonMsg{
+		Data: Data{},
+	}
+	if len(values) > 0 {
+		msg.Data.Values = values
+	}
+	if len(kinds) > 0 {
+		msg.Data.Kind = kinds[0]
+	}
+	ret, _ := json.MarshalIndent(msg, "", "  ")
+	return ret
+}

@@ -447,3 +447,79 @@ func (w *responseWriter) Unmarshal(ret interface{}) error {
 	}
 	return json.Unmarshal(w.Bytes(), ret)
 }
+
+// UrlHandler
+
+type urlHandler struct {
+	uri        neturl.URL
+	errHandler ErrHandler
+}
+
+func UriHandler(hostPort string, errHandler ErrHandler) (*urlHandler, error) {
+	uri, err := neturl.Parse(hostPort)
+	if err != nil {
+		return nil, err
+	} else if uri.Scheme == "" || uri.Host == "" {
+		return nil, fmt.Errorf("Emtpy scheme or host")
+	} else {
+		if errHandler == nil {
+			errHandler = SimpleJsonErrHandler
+		}
+		return &urlHandler{*uri, errHandler}, nil
+	}
+}
+
+type ErrHandler func(err error, reply *http.Response, w http.ResponseWriter, req *http.Request)
+
+func SimpleErrHandler(err error, res *http.Response, w http.ResponseWriter, req *http.Request) {
+	if res == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+	} else if res.Body == nil {
+		w.WriteHeader(res.StatusCode)
+		for k, v := range res.Header {
+			w.Header()[k] = v
+		}
+		w.Write([]byte(err.Error()))
+	} else {
+		RelayResponse(w, res)
+	}
+}
+
+func SimpleJsonErrHandler(err error, res *http.Response, w http.ResponseWriter, req *http.Request) {
+	if res == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(SimpleJsonError(err.Error(), http.StatusInternalServerError))
+	} else if res.Body == nil {
+		w.WriteHeader(res.StatusCode)
+		for k, v := range res.Header {
+			w.Header()[k] = v
+		}
+		w.Write(SimpleJsonError(err.Error(), http.StatusInternalServerError))
+	} else {
+		RelayResponse(w, res)
+	}
+}
+
+func (h *urlHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	req.Host = ""
+	req.URL.Scheme = h.uri.Scheme
+	req.URL.Host = h.uri.Host
+
+	client := &http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		h.errHandler(err, res, w, req)
+	} else {
+		RelayResponse(w, res)
+	}
+}
+
+func RelayResponse(w http.ResponseWriter, res *http.Response) {
+	w.WriteHeader(res.StatusCode)
+	for k, v := range res.Header {
+		w.Header()[k] = v
+	}
+	defer res.Body.Close()
+	io.Copy(w, res.Body)
+}

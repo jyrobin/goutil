@@ -1,3 +1,7 @@
+// Copyright (c) 2021 Jing-Ying Chen. Subject to the MIT License.
+
+// REF - https://stackoverflow.com/questions/56616196/how-to-convert-camel-case-string-to-snake-case/56616250
+
 package goutil
 
 import (
@@ -6,8 +10,6 @@ import (
 	"strings"
 	"unicode"
 )
-
-// REF - https://stackoverflow.com/questions/56616196/how-to-convert-camel-case-string-to-snake-case/56616250
 
 // ASCII only
 

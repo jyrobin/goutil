@@ -8,33 +8,43 @@ import (
 	"path/filepath"
 )
 
-func ResolvePath(basePath, relPath string) (string, error) {
-	if filepath.IsAbs(relPath) {
-		return relPath, nil
+func joinPair(basePath, relPath string) string {
+	if relPath == "" {
+		return basePath
+	}
+	if basePath == "" || filepath.IsAbs(relPath) {
+		return relPath
+	}
+
+	return filepath.Join(basePath, relPath)
+}
+
+// return fpath even if bad basePath
+func ResolvePath(basePath string, relPaths ...string) (string, error) {
+	for _, relPath := range relPaths {
+		basePath = joinPair(basePath, relPath)
 	}
 
 	abs, err := filepath.Abs(basePath)
 	if err != nil {
-		return filepath.Join(basePath, relPath), err
+		return basePath, err
 	}
 
-	return filepath.Join(abs, relPath), nil
+	return abs, nil
 }
 
-func GetExistingFileInfo(basePath, relPath string) (os.FileInfo, string, error) {
-	var fi os.FileInfo
-	fpath, err := ResolvePath(basePath, relPath)
+// return fpath even not exists
+func GetExistingFileInfo(basePath string, relPaths ...string) (os.FileInfo, string, error) {
+	var fi os.FileInfo = nil
+	fpath, err := ResolvePath(basePath, relPaths...)
 	if err == nil {
-		if fi, err = os.Stat(fpath); err == nil {
-			return fi, fpath, nil
-		}
+		fi, err = os.Stat(fpath)
 	}
-
-	return nil, fpath, err
+	return fi, fpath, err
 }
 
-func FileExists(basePath, relPath string) bool {
-	fi, _, _ := GetExistingFileInfo(basePath, relPath)
+func FileExists(basePath string, relPaths ...string) bool {
+	fi, _, _ := GetExistingFileInfo(basePath, relPaths...)
 	return fi != nil && fi.Mode().IsRegular()
 }
 
@@ -60,7 +70,7 @@ func ResolveExistingDir(basePath, relPath string) (string, error) {
 		return fpath, err
 	}
 	if !fi.Mode().IsDir() {
-		err = fmt.Errorf("%s %s is not a file", basePath, relPath)
+		err = fmt.Errorf("%s %s is not a folder", basePath, relPath)
 	}
 	return fpath, err
 }

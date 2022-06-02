@@ -270,6 +270,16 @@ func HttpDo(method, url, contentType string, data []byte, headers StrMap) (*http
 	return client.Do(req)
 }
 
+func FormDo(method, url string, data, headers StrMap) (*http.Response, error) {
+	req, err := FormRequest(method, url, data, headers)
+	if err != nil {
+		return nil, err
+	}
+
+	client := &http.Client{}
+	return client.Do(req)
+}
+
 func HttpCall(method, url, contentType string, data []byte, headers StrMap) ([]byte, *http.Response, error) {
 	res, err := HttpDo(method, url, contentType, data, headers)
 	if err != nil {
@@ -429,9 +439,9 @@ func (w *responseWriter) String() string {
 	return w.body.String()
 }
 
-func (w *responseWriter) Unmarshal(ret interface{}) error {
-	if w.statusCode >= 400 {
-		return fmt.Errorf("StatusCode %d", w.statusCode)
+func (w *responseWriter) Unmarshal(ret interface{}, forced ...bool) error {
+	if w.statusCode >= 400 && (len(forced) == 0 || !forced[0]) {
+		return fmt.Errorf("Error %d: %s", w.statusCode, w.String())
 	}
 	return json.Unmarshal(w.Bytes(), ret)
 }

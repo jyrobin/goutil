@@ -149,6 +149,32 @@ func GetMapKeys(val interface{}) ([]string, error) {
 	return ret, nil
 }
 
+func AccessMapValue(val interface{}, path string) interface{} {
+	ps := strings.Split(path, ".")
+	return GetMapValue(val, ps)
+}
+func GetMapValue(val interface{}, path []string) interface{} {
+	if len(path) == 0 {
+		return val
+	}
+	var child interface{}
+	head := path[0]
+	switch v := val.(type) { // let me optimize pre-maturally
+	case map[string]interface{}:
+		child = v[head]
+	case Map:
+		child = v[head]
+	case map[string]string:
+		child = v[head]
+	case StrMap:
+		child = v[head]
+	}
+	if child == nil {
+		return nil
+	}
+	return GetMapValue(child, path[1:])
+}
+
 // only concerns string keyed map sub-structure
 // - slices, pointers, structs, etc are compared via deepEqual
 func ContainsRecursive(v1, v2 interface{}) bool {

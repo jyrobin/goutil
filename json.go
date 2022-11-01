@@ -64,17 +64,6 @@ func (d *Data) AddItem(item interface{}) error {
 	return nil
 }
 
-type Error struct {
-	Code    int         `json:"code,omitempty"`
-	Message string      `json:"message,omitempty"`
-	Errors  []ErrorItem `json:"errors,omitempty"`
-}
-type ErrorItem struct {
-	Message string `json:"message,omitempty"`
-	Domain  string `json:"domain,omitempty"`
-	Reason  string `json:"reason,omitempty"`
-}
-
 func SimpleJsonError(msg string, codes ...int) []byte {
 	err := JsonMsg{
 		Error: Error{

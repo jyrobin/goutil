@@ -46,6 +46,39 @@ func HasNil(vs ...interface{}) bool {
 	return false
 }
 
+func IsType(v interface{}, t reflect.Type) bool {
+	vt := reflect.TypeOf(v)
+	switch t.Kind() {
+	case reflect.Interface:
+		return vt.Implements(t)
+	case reflect.Ptr:
+		if t.Elem().Kind() == reflect.Interface {
+			return vt.Implements(t.Elem())
+		}
+	}
+	return vt == t
+}
+
+func GetField(val interface{}, name string) (interface{}, error) {
+	v := reflect.Indirect(reflect.ValueOf(val))
+
+	// only struct has field, not map
+	if v.Kind() != reflect.Struct {
+		return nil, fmt.Errorf("Not a struct: %v", val)
+	}
+
+	f := v.FieldByName(name)
+	if f.IsValid() {
+		return f.Interface(), nil
+	}
+	return nil, nil
+}
+
+func HasField(val interface{}, name string, expected interface{}) bool {
+	v, err := GetField(val, name)
+	return err == nil && val == v // just use == with its meaning
+}
+
 func IsStringKeyMap(v interface{}) bool {
 	t := reflect.TypeOf(v)
 	return t != nil && t.Kind() == reflect.Map && t.Key().Kind() == reflect.String
